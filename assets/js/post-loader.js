@@ -1,16 +1,41 @@
+/**
+ * Post Loader
+ */
 (function( $ )
 {
 	"use strict";
 
-	/**
-	 * Construct
-	 */
 	function Plugin( elem, options )
 	{
-		this.$elem   = $( elem );
-		this.options = $.extend( {}, Plugin.defaultOptions, options );
+		this.$elem    = $( elem );
+		this.$content = $( this.$elem.data( 'target' ) );
+		this.options  = $.extend( {}, Plugin.defaultOptions, options );
+
+		this.$elem.addClass( 'post-loader' );
 
 		var _this = this;
+
+		// Form submit
+		this.$elem.on( 'submit', '.post-loader-form', function( event )
+		{
+			event.preventDefault();
+
+			// Load
+			_this.load();
+		});
+
+		// Pagination click
+		this.$content.on( 'click', '.pagination .page-link', function( event )
+		{
+			event.preventDefault();
+
+			// Load
+			_this.load(
+			{
+				page : $( this ).data( 'page' ),
+				animate : true,
+			});
+		});
 
 		// Checkbox and radio change.
 		this.$elem.on( 'change', 'input[type="checkbox"], input[type="radio"]', function( event )
@@ -33,37 +58,15 @@
 			}
 		});
 
-		// `.autoload` field change
-		this.$elem.on( 'change', 'form :input.autoload', function( event )
+		// input.autoload change
+		this.$elem.on( 'change', ':input.autoload', function( event )
 		{
 			// Load
 			_this.load();
 		});
 
-		// Pagination item click
-		this.$elem.on( 'click', '.pagination .page-link', function( event )
-		{
-			event.preventDefault();
-
-			// Load
-			_this.load( 
-			{
-				page : $( this ).data( 'page' ),
-				animate : true,
-			});
-		});
-
-		// Form submit
-		this.$elem.on( 'submit', 'form', function( event )
-		{
-			event.preventDefault();
-
-			// Load
-			_this.load();
-		});
-
-		// Notify initialisation
-		this.$elem.trigger( 'postLoader.init', [ this ] );
+		// Notify init
+		$( document ).trigger( 'postLoader.init', [ this ] );
 	}
 
 	Plugin.defaultOptions = 
@@ -71,16 +74,13 @@
 		animationSpeed : 400,
 	};
 
-	Plugin.prototype.$elem   = null;
-	Plugin.prototype.options = {};
-	Plugin.prototype.data    = {};
+	Plugin.prototype.$elem    = null;
+	Plugin.prototype.options  = {};
+	Plugin.prototype.response = null;
 
-	/**
-	 * Load
-	 */
-	Plugin.prototype.load = function( args )
+	Plugin.prototype.load = function( options ) 
 	{
-		// Arguments
+		// Options
 
 		var defaults = 
 		{
@@ -88,27 +88,27 @@
 			animate : false,
 		};
 
-		args = $.extend( {}, defaults, args );
+		options = $.extend( {}, defaults, options );
 
 		// Set page
-		this.$elem.find( 'form :input[name="paged"]' ).val( args.page );
+		this.$elem.find( '.post-loader-form :input[name="paged"]' ).val( options.page );
 
 		// Get fields
-		var $fields = this.$elem.find( 'form :input:not([disabled])' );
+		var $fields = this.$elem.find( '.post-loader-form :input:not([disabled])' );
 
 		// Ajax
-
 		$.ajax(
 		{
 			url : theme.ajaxurl,
 			method : 'POST',
-			data : this.$elem.find( 'form' ).serialize(),
+			data : this.$elem.find( '.post-loader-form' ).serialize(),
 			context : this,
-
+			
 			beforeSend : function( jqXHR, settings )
 			{
 				// Set loading
 				this.$elem.addClass( 'loading' );
+				this.$content.addClass( 'loading' );
 
 				// Disable fields
 				$fields.prop( 'disabled', true );
@@ -119,22 +119,22 @@
 
 			success : function( response, textStatus, jqXHR )
 			{
-				console.log( response );
+				console.log( 'response', response );
 
-				this.data = response;
+				this.response = response;
 
 				// Set content
-				this.$elem.find( '.post-loader-result' ).html( this.data.content );
+				this.$content.html( this.response.content );
 
-				// Animation
-				if ( args.animate ) 
+				// Animate
+				if ( options.animate ) 
 				{
-					// Scroll to result top
+					// Scroll to content top
 					$( [ document.documentElement, document.body ] ).stop().animate(
 					{
-        				scrollTop: this.$elem.find( '.post-loader-result' ).offset().top,
+	        			scrollTop: this.$content.offset().top,
 
-    				}, this.options.animationSpeed );
+	    			}, this.options.animationSpeed );
 				}
 
 				// Dispatch event
@@ -151,16 +151,17 @@
 
 			complete : function( jqXHR, textStatus )
 			{
-				// Enable fields
-				$fields.prop( 'disabled', false );
-
 				// Unset loading
 				this.$elem.removeClass( 'loading' );
+				this.$content.removeClass( 'loading' );
+
+				// Enable fields
+				$fields.prop( 'disabled', false );
 
 				// Dispatch event
 				this.$elem.trigger( 'postLoader.loadComplete', [ this, jqXHR, textStatus ] );
 			}
-		})
+		});
 	};
 
 	/**
@@ -188,11 +189,10 @@
 
 })( jQuery );
 
-(function( $ )
+(function()
 {
-	$( document ).on( 'ready', function()
+	jQuery( document ).on( 'ready', function()
 	{
-		$( '.post-loader' ).postLoader();
+		jQuery( '.post-loader' ).postLoader();
 	});
-
-})( jQuery );
+})();
