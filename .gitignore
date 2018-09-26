@@ -1,5 +1,0 @@
-.*
-!.gitignore
-!.bowerrc
-node_modules
-vendor
