@@ -1,47 +1,42 @@
+/**
+ * Post Loader
+ */
 (function( $ )
 {
 	"use strict";
 
-	/**
-	 * Construct
-	 */
 	function Plugin( elem, options )
 	{
-		this.$elem   = $( elem );
-		this.options = $.extend( {}, Plugin.defaultOptions, options );
+		this.$elem    = $( elem );
+		this.options  = $.extend( {}, Plugin.defaultOptions, options );
+
+		this.$elem.addClass( 'post-loader' );
+
+		// Find content element
+
+		if ( typeof this.$elem.data( 'content' ) !== 'undefined' ) 
+		{
+			this.$content = $( this.$elem.data( 'content' ) );
+		}
+
+		else
+		{
+			this.$content = this.$elem.find( '.post-loader-content' );
+		}
 
 		var _this = this;
 
-		// Checkbox and radio change.
-		this.$elem.on( 'change', 'input[type="checkbox"], input[type="radio"]', function( event )
+		// Form submit
+		this.$elem.on( 'submit', '.post-loader-form', function( event )
 		{
-			// Toggle label `active` class.
+			event.preventDefault();
 
-			var $label = $( this ).closest( 'label' );
-
-			if ( $label.length ) 
-			{
-				if ( $( this ).is( ':checked' ) ) 
-				{
-					$label.addClass( 'active' );
-				}
-
-				else
-				{
-					$label.removeClass( 'active' );
-				}
-			}
-		});
-
-		// `.autoload` field change
-		this.$elem.on( 'change', 'form :input.autoload', function( event )
-		{
 			// Load
 			_this.load();
 		});
 
-		// Pagination item click
-		this.$elem.on( 'click', '.pagination .page-link', function( event )
+		// Pagination Click
+		this.$content.on( 'click', '.pagination .page-link', function( event )
 		{
 			event.preventDefault();
 
@@ -53,138 +48,123 @@
 			});
 		});
 
-		// Form submit
-		this.$elem.on( 'submit', 'form', function( event )
+		// .autload change
+		this.$elem.on( 'change', ':input.autoload', function( event )
 		{
-			event.preventDefault();
-
 			// Load
 			_this.load();
 		});
 
-		// Notify initialisation
-		this.$elem.trigger( 'postLoader.init', [ this ] );
+		// Checkbox and radio change
+		this.$elem.on( 'change', 'input[type="checkbox"], input[type="radio"]', function( event )
+		{
+			// Update label active class
+
+			var $label = $( this ).closest( 'label' );
+
+			if ( $( this ).is( ':checked' ) ) 
+			{
+				$label.addClass( 'active' );
+			}
+
+			else
+			{
+				$label.removeClass( 'active' );
+			}
+		});
+
+		$( document ).trigger( 'postLoader.init', [ this ] );
 	}
 
 	Plugin.defaultOptions = 
 	{
-		animationSpeed : 400,
+		scrollSpeed : 500, // Milliseconds
 	};
 
-	Plugin.prototype.$elem   = null;
+	Plugin.prototype.$elem = null;
+	Plugin.prototype.$content = null;
 	Plugin.prototype.options = {};
-	Plugin.prototype.data    = {};
 
-	/**
-	 * Load
-	 */
-	Plugin.prototype.load = function( args )
+	Plugin.prototype.load = function( options ) 
 	{
-		// Arguments
-
 		var defaults = 
 		{
-			page    : 1,
+			page : 1,
 			animate : false,
 		};
 
-		args = $.extend( {}, defaults, args );
+		options = $.extend( {}, defaults, options );
 
-		// Set page
-		this.$elem.find( 'form :input[name="paged"]' ).val( args.page );
+		this.$elem.find( ':input[name="paged"]' ).val( options.page );
 
-		// Get fields
-		var $fields = this.$elem.find( 'form :input:not([disabled])' );
-
-		// Ajax
+		var $fields = this.$elem.find( ':input:not([disabled])' );
 
 		$.ajax(
 		{
 			url : theme.ajaxurl,
 			method : 'POST',
-			data : this.$elem.find( 'form' ).serialize(),
+			data : this.$elem.find( '.post-loader-form' ).serialize(),
 			context : this,
 
 			beforeSend : function( jqXHR, settings )
 			{
-				// Set loading
 				this.$elem.addClass( 'loading' );
+				this.$content.addClass( 'loading' );
 
-				// Disable fields
 				$fields.prop( 'disabled', true );
 
-				// Dispatch event
-				this.$elem.trigger( 'postLoader.loadBeforeSend', [ this, jqXHR, settings ] );
+				this.$elem.trigger( 'postLoader.loadBeforeSend', [ jqXHR, settings ] );
 			},
 
 			success : function( response, textStatus, jqXHR )
 			{
-				console.log( response );
+				console.log( 'response', response );
 
-				this.data = response;
-
-				// Set content
-				this.$elem.find( '.post-loader-result' ).html( this.data.content );
+				this.$content.html( response.result );
 
 				// Animation
-				if ( args.animate ) 
+				if ( options.animate ) 
 				{
-					// Scroll to result top
+					// Scroll to content top
 					$( [ document.documentElement, document.body ] ).stop().animate(
 					{
-        				scrollTop: this.$elem.find( '.post-loader-result' ).offset().top,
+						scrollTop: this.$content.offset().top
 
-    				}, this.options.animationSpeed );
+					}, this.options.scrollSpeed );
 				}
 
-				// Dispatch event
-				this.$elem.trigger( 'postLoader.loadSuccess', [ this, response, textStatus, jqXHR ] );
+				this.$elem.trigger( 'postLoader.loadSuccess', [ response, textStatus, jqXHR ] );
 			},
 
 			error : function( jqXHR, textStatus, errorThrown )
 			{
-				console.warn( 'error', errorThrown );
-
-				// Dispatch event
-				this.$elem.trigger( 'postLoader.loadError', [ this, jqXHR, textStatus, errorThrown ] );
+				this.$elem.trigger( 'postLoader.loadError', [ jqXHR, textStatus, errorThrown ] );
 			},
 
 			complete : function( jqXHR, textStatus )
 			{
-				// Enable fields
+				this.$elem.removeClass( 'loading' );
+				this.$content.removeClass( 'loading' );
+
 				$fields.prop( 'disabled', false );
 
-				// Unset loading
-				this.$elem.removeClass( 'loading' );
-
-				// Dispatch event
-				this.$elem.trigger( 'postLoader.loadComplete', [ this, jqXHR, textStatus ] );
-			}
+				this.$elem.trigger( 'postLoader.loadComplete', [ jqXHR, textStatus ] );
+			},
 		})
 	};
 
-	/**
-	 * jQuery Plugin
-	 */
 	$.fn.postLoader = function( options )
 	{
-		// Loop elements
 		return this.each( function()
 		{
-			// Check if already instantiated
 			if ( typeof $( this ).data( 'postLoader' ) === 'undefined' ) 
 			{
-				// Create instance
 				var instance = new Plugin( this, options );
 
-				// Attach instance to element
 				$( this ).data( 'postLoader', instance );
 			}
 		});
 	}
-
-	// Assign to global scope
-	window.postLoader = Plugin;
 
 })( jQuery );
 
