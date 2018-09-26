@@ -118,8 +118,6 @@
 
 			success : function( response, textStatus, jqXHR )
 			{
-				console.log( 'response', response );
-
 				this.$content.html( response.result );
 
 				// Animation
