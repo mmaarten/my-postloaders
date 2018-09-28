@@ -12,18 +12,6 @@
 
 		this.$elem.addClass( 'post-loader' );
 
-		// Find content element
-
-		if ( typeof this.$elem.data( 'content' ) !== 'undefined' ) 
-		{
-			this.$content = $( this.$elem.data( 'content' ) );
-		}
-
-		else
-		{
-			this.$content = this.$elem.find( '.post-loader-content' );
-		}
-
 		var _this = this;
 
 		// Form submit
@@ -36,7 +24,7 @@
 		});
 
 		// Pagination Click
-		this.$content.on( 'click', '.pagination .page-link', function( event )
+		this.$elem.on( 'click', '.pagination .page-link', function( event )
 		{
 			event.preventDefault();
 
@@ -101,7 +89,7 @@
 
 		$.ajax(
 		{
-			url : theme.ajaxurl,
+			url : themePostLoader.ajaxurl,
 			method : 'POST',
 			data : this.$elem.find( '.post-loader-form' ).serialize(),
 			context : this,
@@ -109,7 +97,6 @@
 			beforeSend : function( jqXHR, settings )
 			{
 				this.$elem.addClass( 'loading' );
-				this.$content.addClass( 'loading' );
 
 				$fields.prop( 'disabled', true );
 
@@ -118,7 +105,7 @@
 
 			success : function( response, textStatus, jqXHR )
 			{
-				this.$content.html( response.result );
+				this.$elem.find( '.post-loader-content' ).html( response.result );
 
 				// Animation
 				if ( options.animate ) 
@@ -126,7 +113,7 @@
 					// Scroll to content top
 					$( [ document.documentElement, document.body ] ).stop().animate(
 					{
-						scrollTop: this.$content.offset().top
+						scrollTop: this.$elem.find( '.post-loader-content' ).offset().top
 
 					}, this.options.scrollSpeed );
 				}
@@ -142,7 +129,6 @@
 			complete : function( jqXHR, textStatus )
 			{
 				this.$elem.removeClass( 'loading' );
-				this.$content.removeClass( 'loading' );
 
 				$fields.prop( 'disabled', false );
 

@@ -12,164 +12,98 @@ Text Domain:  theme-post-loader
 Domain Path:  /languages
 */
 
-define( 'THEME_POST_LOADER_FILE', __FILE__ );
+define( 'THEME_POST_LOADER_FILE'      , __FILE__ );
+define( 'THEME_POST_LOADER_NONCE_NAME', 'theme_post_loader_nonce' );
+
+require_once plugin_dir_path( THEME_POST_LOADER_FILE ) . 'includes/class-theme-post-loader.php';
+require_once plugin_dir_path( THEME_POST_LOADER_FILE ) . 'includes/class-theme-post-loader-manager.php';
 
 /**
- * Render
+ * Init
  */
-function theme_post_loader( $loader_id, $include_content = true )
+function theme_post_loader_init()
 {
-	$html_id    = "$loader_id-post-loader";
-	$content_id = "$loader_id-post-loader-content";
+	// Loads sample post loader
+	require_once plugin_dir_path( THEME_POST_LOADER_FILE ) . 'includes/class-theme-sample-post-loader.php';
+}
 
-	?>
+add_action( 'init', 'theme_post_loader_init' );
 
-	<div id="<?php echo esc_attr( $html_id ); ?>" class="post-loader" data-id="<?php echo esc_attr( $loader_id ); ?>" data-content="#<?php echo esc_attr( $content_id ); ?>">
-		<?php theme_post_loader_inner( $loader_id, $include_content ); ?>
-	</div><!-- .post-loader -->
+/**
+ * Create Post Loader
+ */
+function theme_create_post_loader( $id, $args = array() )
+{
+	$manager = Theme_Post_Loader_Manager::get_instance();
 
-	<?php
+	return $manager->create_loader( $id, $args );
 }
 
 /**
- * Inner
+ * Register Post Loader
  */
-function theme_post_loader_inner( $loader_id, $include_content = true )
+function theme_register_post_loader( $loader )
 {
-	if ( has_action( "theme_post_loader_inner/loader=$loader_id" ) )
-	{
-		do_action( "theme_post_loader_inner/loader=$loader_id", $loader_id, $include_content );
+	$manager = Theme_Post_Loader_Manager::get_instance();
 
-		return;
-	}
-
-	theme_post_loader_form( $loader_id );
-
-	if ( $include_content ) 
-	{
-		theme_post_loader_content( $loader_id );
-	}
+	$manager->register_loader( $loader );
 }
 
 /**
- * Form
+ * Unregister Post Loader
  */
-function theme_post_loader_form( $loader_id )
+function theme_unregister_post_loader( $loader_id )
 {
-	$html_id = "$loader_id-post-loader-form";
+	$manager = Theme_Post_Loader_Manager::get_instance();
 
-	?>
-
-	<form id="<?php echo esc_attr( $html_id ); ?>" class="post-loader-form" method="post">
-
-		<?php wp_nonce_field( 'theme_post_loader' ); ?>
-
-		<input type="hidden" name="action" value="theme_post_loader_process">
-		<input type="hidden" name="loader" value="<?php echo esc_attr( $loader_id ); ?>">
-		<input type="hidden" name="paged" value="1">
-
-		<?php do_action( "theme_post_loader_form/loader=$loader_id", $loader_id ); ?>
-
-	</form><!-- .post-loader-form -->
-
-	<?php
+	$manager->unregister_loader( $loader_id );
 }
 
 /**
- * Content
+ * Get Post Loaders
  */
-function theme_post_loader_content( $loader_id )
+function theme_get_post_loaders( $loader_id )
 {
-	$html_id = "$loader_id-post-loader-content";
+	$manager = Theme_Post_Loader_Manager::get_instance();
 
-	?>
-
-	<div id="<?php echo esc_attr( $html_id ); ?>" class="post-loader-content">
-		<?php theme_post_loader_result( $loader_id ); ?>
-	</div><!-- .post-loader-content -->
-
-	<?php
+	return $manager->get_loaders( $loader_id );
 }
 
 /**
- * Result
+ * Get Post Loader
  */
-function theme_post_loader_result( $loader_id, &$query = null )
+function theme_get_post_loader( $loader_id )
 {
-	// Post data
+	$manager = Theme_Post_Loader_Manager::get_instance();
 
-	$paged = isset( $_POST['paged'] ) ? $_POST['paged'] : 1;
-
-	// WP Query
-
-	$query_args = array
-	(
-		'post_type'   => 'post',
-		'post_status' => 'publish',
-		'paged'       => $paged,
-	);
-
-	$query_args = apply_filters( "theme_post_loader_query_args/loader=$loader_id", $query_args, $loader_id );
-
-	$query = new WP_Query( $query_args );
-
-	// Output
-
-	do_action( "theme_post_loader_result/loader=$loader_id", $query, $loader_id );
+	return $manager->get_loader( $loader_id );
 }
 
 /**
- * Process
+ * Render Post Loader
  */
-function theme_post_loader_process()
+function theme_post_loader( $loader_id )
 {
-	// Check if ajax
-	if ( ! wp_doing_ajax() ) 
-	{
-		return;
-	}
+	$manager = Theme_Post_Loader_Manager::get_instance();
 
-	// Check referer
-	check_ajax_referer( 'theme_post_loader' );
-
-	// Get result and WP Query object.
-
-	ob_start();
-
-	theme_post_loader_result( $_POST['loader'], $query );
-
-	$result = ob_get_clean();
-
-	// Response
-	wp_send_json( array
-	(
-		'result'        => $result,
-		'found_posts'   => intval( $query->found_posts ),
-		'post_count'    => $query->post_count,
-		'max_num_pages' => $query->max_num_pages,
-		'paged'         => $query->get( 'paged' ),
-	));
+	$manager->render_loader( $loader_id );
 }
 
-add_action( 'wp_ajax_theme_post_loader_process'       , 'theme_post_loader_process' );
-add_action( 'wp_ajax_nopriv_theme_post_loader_process', 'theme_post_loader_process' );
-
 /**
- * Shortcode
+ *  Post Loader Shortcode
  */
 function theme_post_loader_shortcode( $atts, $content, $tag )
 {
 	$defaults = array
 	(
-		'id'              => '',
-		'include_content' => true,
+		'id' => '',
 	);
 
 	$atts = shortcode_atts( $defaults, $atts, $tag );
 
 	ob_start();
 
-	theme_post_loader( $atts['id'], $atts['include_content'] && $atts['include_content'] !== 'false' );
+	theme_post_loader( $atts['id'] );
 
 	return ob_get_clean();
 }
@@ -177,32 +111,16 @@ function theme_post_loader_shortcode( $atts, $content, $tag )
 add_shortcode( 'post-loader', 'theme_post_loader_shortcode' );
 
 /**
- * Content Shortcode
- */
-function theme_post_loader_content_shortcode( $atts, $content, $tag )
-{
-	$defaults = array
-	(
-		'loader' => '',
-	);
-
-	$atts = shortcode_atts( $defaults, $atts, $tag );
-
-	ob_start();
-
-	theme_post_loader_content( $atts['loader'] );
-
-	return ob_get_clean();
-}
-
-add_shortcode( 'post-loader-content', 'theme_post_loader_content_shortcode' );
-
-/**
  * Enqueue Scripts
  */
 function theme_post_loader_enqueue_scripts()
 {
-	wp_enqueue_script( 'theme-post-loader', plugins_url( 'assets/js/post-loader.js', THEME_POST_LOADER_FILE ), array( 'jquery', 'theme' ), false, true );
+	wp_enqueue_script( 'theme-post-loader', plugins_url( 'assets/js/post-loader.js', THEME_POST_LOADER_FILE ), array( 'jquery' ), false, true );
+	
+	wp_localize_script( 'theme-post-loader', 'themePostLoader', array
+	(
+		'ajaxurl' => admin_url( 'admin-ajax.php' ),
+	));
 }
 
 /**
@@ -210,7 +128,12 @@ function theme_post_loader_enqueue_scripts()
  */
 function theme_post_loader_auto_enqueue_scripts()
 {
-	
+	$post = get_post();
+
+	if ( is_a( $post, 'WP_Post') && has_shortcode( $post->post_content, 'post-loader' ) ) 
+	{
+		theme_post_loader_enqueue_scripts();
+	}
 }
 
 add_action( 'wp_enqueue_scripts', 'theme_post_loader_auto_enqueue_scripts' );
