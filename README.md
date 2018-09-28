@@ -5,6 +5,7 @@ Renders posts via ajax.
 
 ### Create post loader
     $args = array();
+    
     theme_create_post_loader( 'my_post_loader', $args );
     
 #### Arguments
