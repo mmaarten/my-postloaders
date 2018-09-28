@@ -4,12 +4,46 @@ class Theme_Post_Loader
 {
 	public $id = null;
 
-	public function __construct( $id )
+	protected $data = array();
+
+	public function __construct( $id, $args = array() )
 	{
-		$this->id = $id;
+		$defaults = array
+		(
+			'before_posts'         => '',
+			'before_post'          => '',
+			'post_template'        => 'template-parts/card.php',
+			'after_post'           => '',
+			'after_posts'          => '',
+			'before_no_posts'      => '',
+			'no_posts_message'     => null,
+			'after_no_posts'       => '',
+			'pagination_mid_size'  => 1,
+			'pagination_prev_text' => __( 'Previous', 'theme-post-loader' ),
+			'pagination_next_text' => __( 'Next', 'theme-post-loader' ),
+			'query_args'           => 'post_type=post',
+		);
+
+		$this->id   = $id;
+		$this->data = wp_parse_args( $args, $defaults );
 
 		add_action( 'wp_ajax_theme_post_loader_process'       , array( $this, 'process' ) );
 		add_action( 'wp_ajax_nopriv_theme_post_loader_process', array( $this, 'process' ) );
+	}
+
+	public function __get( $key )
+	{
+		if ( array_key_exists( $key, $this->data ) ) 
+		{
+			return $this->data[ $key ];
+		}
+
+		return null;
+	}
+
+	public function __set( $key, $value )
+	{
+		$this->data[ $key ] = $value;
 	}
 
 	/**
@@ -116,12 +150,10 @@ class Theme_Post_Loader
 		 * WP Query
 		 */
 
-		$query_args = array
+		$query_args = wp_parse_args( $this->query_args, array
 		(
-			'post_type'   => 'post',
-			'post_status' => 'publish',
-			'paged'       => $paged,
-		);
+			'paged' => $paged,
+		));
 
 		$query_args = apply_filters( "theme_post_loader_query_args/loader={$this->id}", $query_args, $this );
 
@@ -198,39 +230,28 @@ class Theme_Post_Loader
 	 */
 	public function list_posts( $query, $args = array() )
 	{
-		$defaults = array
-		(
-			'before_posts'  => '',
-			'before_post'   => '',
-			'post_template' => 'template-parts/card.php',
-			'after_post'    => '',
-			'after_posts'   => '',
-		);
-
-		$args = wp_parse_args( $args, $defaults );
-
 		// Check posts
 		if ( ! $query->have_posts() ) 
 		{
 			return;
 		}
 
-		echo $args['before_posts'];
+		echo $this->before_posts;
 
 		// The Loop
 		while ( $query->have_posts() ) 
 		{
 			$query->the_post();
 
-			echo $args['before_post'];
+			echo $this->before_post;
 
 			// Include post template
-			locate_template( $args['post_template'], true, false );
+			locate_template( $this->post_template, true, false );
 
-			echo $args['after_post'];
+			echo $this->after_post;
 		}
 
-		echo $args['after_posts'];
+		echo $this->after_posts;
 
 		// Pagination
 		$this->pagination( $query );
@@ -250,80 +271,80 @@ class Theme_Post_Loader
 			return;
 		}
 
-		/**
-		 * Get post type name
-		 */
-
-		$post_types = array();
-
-		// Check post type
-		if ( $query->get( 'post_type' ) ) 
+		if ( is_null( $this->no_posts_message ) ) 
 		{
-			// Loop post types
-			foreach ( (array) $query->get( 'post_type' ) as $post_type ) 
-			{
-				// Get object
-				$post_type = get_post_type_object( $post_type );
+			/**
+			 * Get post type name
+			 */
 
-				// Store post type name
-				if ( $post_type ) 
+			$post_types = array();
+
+			// Check post type
+			if ( $query->get( 'post_type' ) ) 
+			{
+				// Loop post types
+				foreach ( (array) $query->get( 'post_type' ) as $post_type ) 
 				{
-					$post_types[ $post_type->name ] = strtolower( $post_type->labels->name );
+					// Get object
+					$post_type = get_post_type_object( $post_type );
+
+					// Store post type name
+					if ( $post_type ) 
+					{
+						$post_types[ $post_type->name ] = strtolower( $post_type->labels->name );
+					}
+				}
+
+				$post_types = array_values( $post_types );
+			}
+
+			/**
+			 * Message
+			 */
+
+			// Check post types
+			if ( $post_types ) 
+			{
+				// One post type
+				if ( count( $post_types ) == 1 ) 
+				{
+					$message = sprintf( __( 'No %s found.', 'theme-post-loader' ), $post_types[0] );
+				}
+
+				// Multiple post types
+				else
+				{
+					$last = array_pop( $post_types );
+
+					$message = sprintf( __( 'No %s or %s found.', 'theme-post-loader' ), implode( ', ', $post_types ), $last );
 				}
 			}
 
-			$post_types = array_values( $post_types );
-		}
-
-		/**
-		 * Message
-		 */
-
-		// Check post types
-		if ( $post_types ) 
-		{
-			// One post type
-			if ( count( $post_types ) == 1 ) 
-			{
-				$message = sprintf( __( 'No %s found.', 'theme-post-loader' ), $post_types[0] );
-			}
-
-			// Multiple post types
 			else
 			{
-				$last = array_pop( $post_types );
-
-				$message = sprintf( __( 'No %s or %s found.', 'theme-post-loader' ), implode( ', ', $post_types ), $last );
+				// No post types
+				$message = __( 'No items found.', 'theme-post-loader' );
 			}
 		}
 
 		else
 		{
-			// No post types
-			$message = __( 'No items found.', 'theme-post-loader' );
+			$message = $this->no_posts_message;
 		}
 
-		// Output
-		echo $before . $message . $after;
+		// Check message
+		if ( $message ) 
+		{
+			// Output
+			echo $this->before_no_posts . $message . $this->after_no_posts;
+		}
 	}
-
 
 	/**
 	 * Pagination
 	 */
 	public function pagination( $query, $args = array() )
 	{
-		// Arguments
-
-		$defaults = array
-		(
-			'mid_size'  => 3,
-			'prev_text' => __( 'Previous page', 'theme-post-loader' ),
-			'next_text' => __( 'Next page', 'theme-post-loader' ),
-		);
-
-		$args = wp_parse_args( $args, $defaults );
-
 		// Check if pagination is needed
 
 		$paged = $query->get( 'paged' );
@@ -335,8 +356,8 @@ class Theme_Post_Loader
 
 		// Set size
 
-		$size_start = $paged - $args['mid_size'];
-		$size_end   = $paged + $args['mid_size'];
+		$size_start = $paged - $this->pagination_mid_size;
+		$size_end   = $paged + $this->pagination_mid_size;
 
 		if ( $size_start < 1 ) 
 		{
@@ -356,7 +377,7 @@ class Theme_Post_Loader
 			<ul class="pagination">
 
 				<?php if ( $paged > 1 ) : ?>
-				<li class="page-item"><a class="page-link" data-page="<?php echo $paged - 1; ?>" href="#" tabindex="-1"><?php echo $args['prev_text']; ?></a></li>
+				<li class="page-item"><a class="page-link" data-page="<?php echo $paged - 1; ?>" href="#" tabindex="-1"><?php echo $this->pagination_prev_text; ?></a></li>
 				<?php endif; ?>
 
 				<?php for ( $page = $size_start; $page <= $size_end; $page++ ) : 
@@ -375,7 +396,7 @@ class Theme_Post_Loader
 				<?php endfor; ?>
 				
 				<?php if ( $paged < $query->max_num_pages ) : ?>
-				<li class="page-item"><a class="page-link" data-page="<?php echo $paged + 1; ?>" href="#" tabindex="-1"><?php echo $args['next_text']; ?></a></li>
+				<li class="page-item"><a class="page-link" data-page="<?php echo $paged + 1; ?>" href="#" tabindex="-1"><?php echo $this->pagination_next_text; ?></a></li>
 				<?php endif; ?>
 
 			</ul><!-- .pagination -->
