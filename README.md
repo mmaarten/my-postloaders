@@ -10,16 +10,27 @@ Renders posts via ajax.
 #### Arguments
 
 **before_posts** (string) - Text to show before posts are rendered. Default: "".
+
 **before_post** (string) - Text to show before post is rendered. Default: "".
+
 **post_template** (string) - Post template to load. Path relative to the theme directory. default: "template-parts/card.php".
+
 **after_post** (string) - Text to show after post is rendered. Default: "".
+
 **after_posts** (string) - Text to show after posts are rendered. Default: "".
+
 **before_no_posts** (string) - Text shown before no-posts-found message. Default: "".
+
 **no_posts_message** (string|null) - Message to displaye when no posts are found. Default: null (auto renders message).
+
 **after_no_posts** (string) - Text shown after no-posts-found message. Default: "".
+
 **pagination_mid_size** (int) - How many page numbers to display to either side of the current page. Default: 1.
+
 **pagination_prev_text** (string) - Text of the link to the next set of posts. Default: "Previous".
+
 **pagination_next_text** (string) - Text of the link to the next set of posts. Default: to "Next".
+
 **query_args** (string|array) - WP Query arguments. Default: "post_type=post".
 
 ### Display post loader
