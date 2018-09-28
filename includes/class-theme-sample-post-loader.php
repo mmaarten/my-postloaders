@@ -4,7 +4,17 @@ class Theme_Sample_Post_Loader extends Theme_Post_Loader
 {
 	public function __construct()
 	{
-		parent::__construct( 'sample');
+		parent::__construct( 'sample', array
+		(
+			'before_posts'         => '<div class="row">',
+			'before_post'          => '<div class="col-md-4">',
+			'post_template'        => 'template-parts/card.php',
+			'after_post'           => '</div>',
+			'after_posts'          => '</div>',
+			'before_no_posts'      => '<div class="alert alert-warning">',
+			'no_posts_message'     => null,
+			'after_no_posts'       => '</div>',
+		));
 	}
 
 	/**
@@ -53,7 +63,7 @@ class Theme_Sample_Post_Loader extends Theme_Post_Loader
 			<?php if ( $terms ) : ?>
 			<div class="term-filter d-lg-flex flex-lg-column">
 				<?php foreach ( $terms as $term ) : ?>
-				<label class="btn btn-outline-dark btn-sm text-lg-left"><input type="checkbox" class="autoload d-none" name="terms[]" value="<?php echo esc_attr( $term->term_id ); ?>"> <?php echo esc_html( $term->name ); ?></label>
+				<label><input type="checkbox" class="autoload" name="terms[]" value="<?php echo esc_attr( $term->term_id ); ?>"> <?php echo esc_html( $term->name ); ?></label>
 				<?php endforeach; ?>
 			</div><!-- .term-filter -->
 			<?php endif ?>
@@ -141,14 +151,7 @@ class Theme_Sample_Post_Loader extends Theme_Post_Loader
 			 * List posts
 			 */
 
-			$this->list_posts( $query, array
-			(
-				'before_posts'  => '<div class="row">',
-				'before_post'   => '<div class="col-md-4">',
-				'post_template' => 'template-parts/card.php',
-				'after_post'    => '</div>',
-				'after_posts'   => '</div>',
-			));
+			$this->list_posts( $query );
 		}
 
 		else
