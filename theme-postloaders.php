@@ -16,8 +16,6 @@ define( 'POSTLOADERS_FILE', __FILE__ );
 define( 'POSTLOADERS_VERSION', '0.1.0' );
 define( 'POSTLOADERS_SHORTCODE', 'postloader' );
 
-include 'sample.php';
-
 /**
  * Render Postloader
  *
