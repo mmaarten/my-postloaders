@@ -1,4 +1,4 @@
-<?php if ( ! defined( 'ABSPATH' ) ) exit; // Exit when accessed directly.
+<?php
 /*
 Plugin Name: Postloaders
 Plugin URI:
@@ -10,10 +10,11 @@ Text Domain: postloader
 Domain Path: /languages
 */
 
+namespace theme;
+
 define( 'POSTLOADERS_FILE', __FILE__ );
 define( 'POSTLOADERS_VERSION', '0.1.0' );
 define( 'POSTLOADERS_SHORTCODE', 'postloader' );
-define( 'POSTLOADERS_NONCE_NAME', 'postloader_nonce' );
 
 include 'sample.php';
 
@@ -32,13 +33,13 @@ function postloader( $loader_id )
 
 		<form class="postloader-form" method="post">
 			
-			<?php wp_nonce_field( 'form', POSTLOADERS_NONCE_NAME ); ?>
+			<?php wp_nonce_field( 'postloader_form', THEME_NONCE_NAME ); ?>
 
-			<input type="hidden" name="action" value="postloader_process">
+			<input type="hidden" name="action" value="theme_postloader_process">
 			<input type="hidden" name="loader" value="<?php echo esc_attr( $loader_id ); ?>">
 			<input type="hidden" name="page" value="1">
 
-			<?php do_action( "postloader_form/loader=$loader_id", $loader_id ); ?>
+			<?php do_action( "theme/postloader_form/loader=$loader_id", $loader_id ); ?>
 
 		</form><!-- .postloader-form -->
 
@@ -76,7 +77,7 @@ function postloader_content( $loader_id, &$the_query = null )
 		'paged'       => max( $page, 1 ),
 	);
 
-	$query_args = apply_filters( "postloader_query_args/loader=$loader_id", $query_args, $is_submit, $loader_id );
+	$query_args = apply_filters( "theme/postloader_query_args/loader=$loader_id", $query_args, $is_submit, $loader_id );
 
 	// Set WP Query
 
@@ -84,7 +85,7 @@ function postloader_content( $loader_id, &$the_query = null )
 
 	// Output
 
-	do_action( "postloader_content/loader=$loader_id", $the_query, $loader_id );
+	do_action( "theme/postloader_content/loader=$loader_id", $the_query, $loader_id );
 }
 
 /**
@@ -96,12 +97,12 @@ function postloader_content( $loader_id, &$the_query = null )
  */
 function postloader_is_submit( $loader_id = null )
 {
-	if ( empty( $_POST[ POSTLOADERS_NONCE_NAME ] ) ) 
+	if ( empty( $_POST[ THEME_NONCE_NAME ] ) ) 
 	{
 		return false;
 	}
 
-	if ( ! wp_verify_nonce( $_POST[ POSTLOADERS_NONCE_NAME ], 'form' ) ) 
+	if ( ! wp_verify_nonce( $_POST[ THEME_NONCE_NAME ], 'postloader_form' ) ) 
 	{
 		return false;
 	}
@@ -130,7 +131,7 @@ function postloader_process()
 
 	// Check nonce and referer
 
-	check_ajax_referer( 'form', POSTLOADERS_NONCE_NAME );
+	check_ajax_referer( 'postloader_form', THEME_NONCE_NAME );
 
 	// Get loader id
 
@@ -156,8 +157,8 @@ function postloader_process()
 	wp_send_json( $response );
 }
 
-add_action( 'wp_ajax_postloader_process'       , 'postloader_process' );
-add_action( 'wp_ajax_nopriv_postloader_process', 'postloader_process' );
+add_action( 'wp_ajax_theme_postloader_process'       , 'theme\postloader_process' );
+add_action( 'wp_ajax_nopriv_theme_postloader_process', 'theme\postloader_process' );
 
 /**
  * Pagination
@@ -262,7 +263,7 @@ function postloader_shortcode( $atts )
 	return ob_get_clean();
 }
 
-add_shortcode( POSTLOADERS_SHORTCODE, 'postloader_shortcode' );
+add_shortcode( POSTLOADERS_SHORTCODE, 'theme\postloader_shortcode' );
 
 /**
  * Scripts
@@ -286,4 +287,4 @@ function postloader_scripts()
 	}
 }
 
-add_action( 'wp_enqueue_scripts', 'postloader_scripts' );
+add_action( 'wp_enqueue_scripts', 'theme\postloader_scripts' );

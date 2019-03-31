@@ -6,6 +6,8 @@
 {
 	"use strict";
 
+	window.theme = window.theme || {};
+
 	function Postloader( elem, options )
 	{
 		var _this = this;
@@ -58,7 +60,7 @@
 
 		// Notify
 
-		$( document ).trigger( 'postloader.init', [ this ] );
+		$( document ).trigger( 'theme.postloader.init', [ this ] );
 	}
 
 	Postloader.defaultOptions = 
@@ -76,7 +78,6 @@
 		{
 			page   : undefined,
 			scroll : false,
-			ajaxurl : false,
 		};
 
 		options = $.extend( {}, defaults, options );
@@ -90,7 +91,7 @@
 
 		// Load
 
-		$.post( this.options.ajaxurl, this.$elem.find( '.postloader-form' ).serialize(), function( response )
+		$.post( theme.ajaxurl, this.$elem.find( '.postloader-form' ).serialize(), function( response )
 		{
 			// Set content
 			this.$elem.find( '.postloader-content' ).html( response.content );
@@ -105,7 +106,7 @@
 			    }, this.options.scrollSpeed );
 			};
 
-			this.$elem.trigger( 'postloader.loadComplete', [ response ] );
+			this.$elem.trigger( 'theme.postloader.loadComplete', [ response ] );
 
 		}.bind( this ) );
 	};
@@ -121,7 +122,7 @@
 		});
 	};
 
-	window.Postloader = Postloader;
+	window.theme.Postloader = Postloader;
 
 })( jQuery, window );
 

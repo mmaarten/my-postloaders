@@ -23,7 +23,7 @@ function my_postloader_form( $loader_id )
 	}
 }
 
-add_action( 'postloader_form/loader=my-postloader', 'my_postloader_form', 10, 2 );
+add_action( 'theme/postloader_form/loader=my-postloader', 'my_postloader_form', 10, 2 );
 
 function my_postloader_query_args( $query_args, $is_submit, $loader_id )
 {
@@ -46,7 +46,7 @@ function my_postloader_query_args( $query_args, $is_submit, $loader_id )
 	return $query_args;
 }
 
-add_action( 'postloader_query_args/loader=my-postloader', 'my_postloader_query_args', 10, 3 );
+add_action( 'theme/postloader_query_args/loader=my-postloader', 'my_postloader_query_args', 10, 3 );
 
 function my_postloader_content( $the_query, $loader_id )
 {
@@ -67,7 +67,7 @@ function my_postloader_content( $the_query, $loader_id )
 
 		echo '</div>'; // .row
 
-		postloader_pagination( $the_query );
+		theme\postloader_pagination( $the_query );
 
 		wp_reset_postdata();
 	}
@@ -78,4 +78,4 @@ function my_postloader_content( $the_query, $loader_id )
 	}
 }
 
-add_action( 'postloader_content/loader=my-postloader', 'my_postloader_content', 10, 2 );
+add_action( 'theme/postloader_content/loader=my-postloader', 'my_postloader_content', 10, 2 );
