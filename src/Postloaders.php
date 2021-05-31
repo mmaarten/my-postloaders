@@ -36,7 +36,7 @@ final class Postloaders
             $loader = new Postloader($loader);
         }
 
-        $this->loaders[$loader->id] = $loader;
+        $this->loaders[$loader->getID()] = $loader;
     }
 
     public function unregister($loader_id)

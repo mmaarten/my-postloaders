@@ -14,10 +14,39 @@
  * Domain Path:       /languages
  */
 
+/**
+ * Include autoloader.
+ */
+$autoloader = __DIR__ . '/vendor/autoload.php';
+
+if (! is_readable($autoloader)) {
+    error_log(
+        sprintf(
+            /* translators: 1: Composer command. 2: plugin directory */
+            esc_html__(
+                'Your installation of the My Postloaders plugin is incomplete. Please run %1$s within the %2$s directory.',
+                'my-postloaders'
+            ),
+            '<code>composer install</code>',
+            '<code>' . esc_html(str_replace(ABSPATH, '', __DIR__)) . '</code>'
+        )
+    );
+    return;
+}
+
+require $autoloader;
+
+/**
+ * Define constants.
+ */
 define('MY_POSTLOADERS_NONCE_NAME', 'postloader_nonce');
 define('MY_POSTLOADERS_PLUGIN_FILE', __FILE__);
 define('MY_POSTLOADERS_SHORTCODE_TAG', 'postloader');
 
-require plugin_dir_path(MY_POSTLOADERS_PLUGIN_FILE) . 'vendor/autoload.php';
-
+/**
+ * Initialize application.
+ */
 add_action('plugins_loaded', ['My\Postloaders\App', 'init']);
+
+require_once plugin_dir_path(MY_POSTLOADERS_PLUGIN_FILE) . 'includes/api.php';
+require_once plugin_dir_path(MY_POSTLOADERS_PLUGIN_FILE) . 'sample.php';

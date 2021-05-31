@@ -4,7 +4,7 @@ namespace My\Postloaders;
 
 class Postloader
 {
-    public $id = '';
+    protected $id = '';
 
     public function __construct($id)
     {
@@ -12,6 +12,11 @@ class Postloader
 
         add_action("wp_ajax_postloader_{$this->id}_process", [$this, 'process']);
         add_action("wp_ajax_nopriv_postloader_{$this->id}_process", [$this, 'process']);
+    }
+
+    public function getID()
+    {
+        return $this->id;
     }
 
     public function render()
@@ -29,7 +34,6 @@ class Postloader
             <div class="postloader-more">
                 <?php $this->more(); ?>
             </div>
-
         </div>
 
         <?php
@@ -40,8 +44,7 @@ class Postloader
         wp_nonce_field("postloader_{$this->id}_form", MY_POSTLOADERS_NONCE_NAME);
 
         echo '<input type="hidden" name="action" value="postloader_' . esc_attr($this->id) . '_process">';
-        echo '<input type="hidden" name="loader" value="' . esc_attr($this->id) . '">';
-        echo '<input type="hidden" name="page" value="1">';
+        echo '<input type="hidden" name="page" value="">';
 
         do_action("postloader_form/loader={$this->id}", $this);
     }
@@ -53,7 +56,10 @@ class Postloader
 
     public function more()
     {
-        $more = sprintf('<button type="button" class="postloader-more-button">%s</button>', esc_html__('Load more', 'my-postloaders'));
+        $more = sprintf(
+            '<button type="button" class="postloader-more-button">%s</button>',
+            esc_html__('Load more', 'my-postloaders')
+        );
 
         echo apply_filters("postloader_more/loader={$this->id}", $more, $this);
     }
@@ -66,6 +72,35 @@ class Postloader
     public function response($response)
     {
         return apply_filters("postloader_response/loader={$this->id}", $response, $this);
+    }
+
+    public function process()
+    {
+        if (! wp_doing_ajax()) {
+            return;
+        }
+
+        check_ajax_referer("postloader_{$this->id}_form", MY_POSTLOADERS_NONCE_NAME);
+
+        $query_args = $this->queryArgs([
+            'paged' => $_POST['page'],
+        ]);
+
+        $wp_query = new \WP_Query($query_args);
+
+        ob_start();
+
+        $this->content($wp_query);
+
+        $content = ob_get_clean();
+
+        $response = $this->response([
+            'content'       => $content,
+            'paged'         => $wp_query->get('paged'),
+            'max_num_pages' => $wp_query->max_num_pages,
+        ]);
+
+        wp_send_json($response);
     }
 
     public function noPostsMessage($wp_query, $before = '', $after = '')
@@ -98,34 +133,5 @@ class Postloader
         }
 
         echo $after;
-    }
-
-    public function process()
-    {
-        if (! wp_doing_ajax()) {
-            return;
-        }
-
-        check_ajax_referer("postloader_{$this->id}_form", MY_POSTLOADERS_NONCE_NAME);
-
-        $query_args = $this->queryArgs([
-            'paged' => $_POST['page'],
-        ]);
-
-        $wp_query = new \WP_Query($query_args);
-
-        ob_start();
-
-        $this->content($wp_query);
-
-        $content = ob_get_clean();
-
-        $response = $this->response([
-            'content'       => $content,
-            'page'          => $wp_query->get('paged'),
-            'max_num_pages' => $wp_query->max_num_pages,
-        ]);
-
-        wp_send_json($response);
     }
 }

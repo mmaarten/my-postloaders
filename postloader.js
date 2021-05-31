@@ -37,12 +37,9 @@
   Postloader.prototype.load = function(page) {
 
     this.$elem.addClass('is-loading');
-
     this.$elem.find('.postloader-form input[name="page"]').val(page);
 
     jQuery.post(this.options.ajaxurl, this.$elem.find('.postloader-form').serialize(), function(response){
-
-      console.log(response);
 
       this.$elem.removeClass('is-loading');
 
@@ -86,7 +83,6 @@
 
 (function(){
   document.addEventListener('DOMContentLoaded', function(){
-
     // Checkbox change. Update label 'active' class.
     jQuery('.postloader').on('change', '.postloader-form label input[type="checkbox"]', function(){
       var $label = jQuery(this).closest('label');

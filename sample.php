@@ -26,16 +26,15 @@ add_action('postloader_form/loader=my_postloader', 'my_postloader_form');
 
 function my_postloader_content($wp_query, $loader)
 {
-    if ($wp_query->have_posts()) {
-        while ($wp_query->have_posts()) {
-            $wp_query->the_post();
-            get_template_part('template-parts/content', get_post_type());
-        }
-        wp_reset_postdata();
-    } else {
-        // No posts found message…
-        $loader->noPostsMessage($wp_query);
-    }
+    $loader->loop($wp_query, [
+        'template'        => 'template-parts/content',
+        'before'          => '<div class="row">',
+        'before_post'     => '<div class="col-md-4">',
+        'after_post'      => '</div>',
+        'after'           => '</div>',
+        'no_posts_before' => '<div class="alert alert-info" role="alert">',
+        'no_posts_after'  => '</div>',
+    ]);
 }
 
 add_action('postloader_content/loader=my_postloader', 'my_postloader_content', 10, 2);
@@ -69,7 +68,7 @@ add_filter('postloader_query_args/loader=my_postloader', 'my_postloader_query_ar
 
 function my_register_postloaders()
 {
-    \My\Postloaders\App::registerPostloader('my_postloader');
+    my_register_postloader('my_postloader');
 }
 
 add_action('init', 'my_register_postloaders');
