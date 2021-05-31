@@ -49,4 +49,3 @@ define('MY_POSTLOADERS_SHORTCODE_TAG', 'postloader');
 add_action('plugins_loaded', ['My\Postloaders\App', 'init']);
 
 require_once plugin_dir_path(MY_POSTLOADERS_PLUGIN_FILE) . 'includes/api.php';
-require_once plugin_dir_path(MY_POSTLOADERS_PLUGIN_FILE) . 'sample.php';
