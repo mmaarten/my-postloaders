@@ -1,86 +1,74 @@
 <?php
 
-/**
- * Render form
- *
- * @param My\Postloaders\Postloader $loader
- */
-add_action('postloader_form/loader=my_postloader', function ($loader) {
+namespace MyNamespace;
 
-    $terms = get_terms([
-        'taxonomy'   => 'category',
-        'hide_empty' => true,
-    ]);
+use \My\Postloaders\Postloader as Postloader;
 
-    if ($terms) {
-        echo '<ul class="list-inline">';
-        echo '<li class="list-inline-item">';
-        printf(
-            '<label class="btn btn-outline-secondary btn-sm active"><input type="radio" class="autoload d-none" name="terms[]" value="%1$s" checked> %2$s</label>',
-            '',
-            __('Show all')
-        );
-        echo '</li>';
-        foreach ($terms as $term) {
-            echo '<li class="list-inline-item">';
-            printf(
-                '<label class="btn btn-outline-primary btn-sm"><input type="radio" class="autoload d-none" name="terms[]" value="%1$s"> %2$s</label>',
-                esc_attr($term->term_id),
-                esc_html($term->name)
-            );
-            echo '</li>';
-        }
-        echo '</ul>';
+class Sample extends Postloader
+{
+    public function __construct()
+    {
+        parent::__construct('sample');
     }
-});
 
-/**
- * Render content
- *
- * @param WP_Query $the_query
- * @param My\Postloaders\Postloader $loader
- */
-add_action('postloader_content/loader=my_postloader', function ($the_query, $loader) {
+    /**
+     * Render form content
+     */
+    public function form()
+    {
+        parent::form();
+    }
 
-    $loader->theLoop($the_query, [
-        'template'    => 'template-parts/content',
-        'before'      => '<div class="row">',
-        'before_post' => '<div class="col-md-4">',
-        'after_post'  => '</div>',
-        'after'       => '</div>',
-    ]);
+    /**
+     * Render content
+     *
+     * @param WP_Query $the_query
+     */
+    public function content($the_query)
+    {
+        if ($the_query->have_posts()) {
+            echo '<div class="row">';
+            while ($the_query->have_posts()) {
+                $the_query->the_post();
+                echo '<div class="col-md-4">';
+                get_template_part('template-parts/content', get_post_type());
+                echo '</div>';
+            }
+            echo '</div>';
+            wp_reset_postdata();
+        } else {
+            printf(
+                '<div class="alert alert-info" role="alert">%s</div>',
+                esc_html__('No posts found.', 'my-textdomain')
+            );
+        }
+    }
 
-    $loader->noPostsMessage($the_query, '<div class="alert alert-info" role="alert">', '</div>');
-}, 10, 2);
+    /**
+     * Render load more content
+     */
+    public function more()
+    {
+        printf(
+            '<button type="button" class="postloader-more-button btn btn-primary">%1$s</button',
+            esc_html__('Load more', 'my-textdomain')
+        );
+    }
 
-/**
- * Alter query arguments
- *
- * @param array $query_args
- * @param My\Postloaders\Postloader $loader
- * @return array
- */
-add_filter('postloader_query_args/loader=my_postloader', function ($query_args, $loader) {
-
-    $loader->applyTaxQuery('category', 'terms', $query_args);
-
-    return $query_args;
-}, 10, 2);
-
-/**
- * Render load more
- *
- * @param string $more
- * @param My\Postloaders\Postloader $loader
- * @return string
- */
-add_action('postloader_more/loader=my_postloader', function ($more, $loader) {
-    // Create Bootstrap button.
-    return str_replace(' class="postloader-more-button', ' class="postloader-more-button btn btn-primary', $more);
-}, 10, 2);
+    /**
+     * Alter query arguments
+     *
+     * @param array $query_args
+     * @return array
+     */
+    public function queryArgs($query_args)
+    {
+        return $query_args;
+    }
+}
 
 // Create postloader.
-$postloader = new My\Postloaders\Postloader('my_postloader');
+$postloader = new Sample();
 
 // Shortcode to render postloader
 add_shortcode('postloader', function () use ($postloader) {
@@ -92,6 +80,6 @@ add_shortcode('postloader', function () use ($postloader) {
 add_action('wp_enqueue_scripts', function () {
     $post = get_post();
     if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'postloader')) {
-        My\Postloaders\App::enqueueScripts();
+        \My\Postloaders\App::getInstance()->enqueueScripts();
     }
 });
