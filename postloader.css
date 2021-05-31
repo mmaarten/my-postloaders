@@ -1,0 +1,3 @@
+.postloader:not(.has-more) .postloader-more {
+  display: none;
+}

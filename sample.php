@@ -1,81 +1,75 @@
-<?php if ( ! defined( 'ABSPATH' ) ) exit; // Exit when accessed directly.
+<?php
 
-function my_postloader_form( $loader_id )
+function my_postloader_form($loader)
 {
-	$terms = get_terms( array
-	(
-		'taxonomy' => 'category',
-	));
+    $terms = get_terms(['taxonomy' => 'category', 'hide_empty' => true]);
 
-	if ( $terms ) 
-	{
-		echo '<nav>';
-
-		foreach ( $terms as $term ) 
-		{
-			echo '<div class="form-check">';
-			printf( '<input type="checkbox" id="term-%s-%s" class="form-check-input autoload" name="terms[]" value="%s">', esc_attr( $term->taxonomy ), esc_attr( $term->term_id ), esc_attr( $term->term_id ) );
-			printf( '<label class="form-check-label" for="term-%s-%s">%s</label>', esc_attr( $term->taxonomy ), esc_attr( $term->term_id ), esc_html( $term->name ) );
-			echo '</div>';
-		}
-
-		echo '</nav>';
-	}
+    if ($terms) {
+        echo '<ul class="list-inline">';
+            printf(
+                '<li class="list-inline-item"><label class="btn btn-outline-primary btn-sm active"><input type="radio" class="autoload d-none" name="terms[]" value="%1$s" checked="checked"> %2$s</label></li>',
+                esc_attr(0),
+                esc_html('All')
+            );
+        foreach ($terms as $term) {
+            printf(
+                '<li class="list-inline-item"><label class="btn btn-outline-primary btn-sm"><input type="radio" class="autoload d-none" name="terms[]" value="%1$s"> %2$s</label></li>',
+                esc_attr($term->term_id),
+                esc_html($term->name)
+            );
+        }
+        echo '</ul>';
+    }
 }
 
-add_action( 'theme/postloader_form/loader=my-postloader', 'my_postloader_form', 10, 2 );
+add_action('postloader_form/loader=my_postloader', 'my_postloader_form');
 
-function my_postloader_query_args( $query_args, $is_submit, $loader_id )
+function my_postloader_content($wp_query, $loader)
 {
-	$terms = $is_submit && isset( $_POST['terms'] ) ? $_POST['terms'] : array();
-
-	if ( $terms ) 
-	{
-		$query_args['tax_query'] = array
-		(
-			array
-			(
-				'taxonomy' => 'category',
-				'field'    => 'term_id',
-				'terms'    => array_map( 'intval', $terms ),
-				'operator' => 'IN',
-			),
-		);
-	}
-
-	return $query_args;
+    if ($wp_query->have_posts()) {
+        while ($wp_query->have_posts()) {
+            $wp_query->the_post();
+            get_template_part('template-parts/content', get_post_type());
+        }
+        wp_reset_postdata();
+    } else {
+        // No posts found message…
+        $loader->noPostsMessage($wp_query);
+    }
 }
 
-add_action( 'theme/postloader_query_args/loader=my-postloader', 'my_postloader_query_args', 10, 3 );
+add_action('postloader_content/loader=my_postloader', 'my_postloader_content', 10, 2);
 
-function my_postloader_content( $the_query, $loader_id )
+function my_postloader_more($more, $loader)
 {
-	if ( $the_query->have_posts() ) 
-	{
-		echo '<div class="row">';
-
-		while ( $the_query->have_posts() ) 
-		{
-			$the_query->the_post();
-
-			echo '<div class="col-md-6 col-lg-4">';
-
-			get_template_part( 'template-parts/loop', 'card' );
-
-			echo '</div>';
-		}
-
-		echo '</div>'; // .row
-
-		theme\postloader_pagination( $the_query );
-
-		wp_reset_postdata();
-	}
-
-	else
-	{
-		printf( '<div class="alert alert-info">%s</div>', __( 'No posts available.', 'theme' ) );
-	}
+    return $more;
 }
 
-add_action( 'theme/postloader_content/loader=my-postloader', 'my_postloader_content', 10, 2 );
+add_filter('postloader_more/loader=my_postloader', 'my_postloader_more', 10, 2);
+
+function my_postloader_query_args($query_args, $loader)
+{
+    $terms = isset($_POST['terms']) ? array_filter(array_map('intval', (array)$_POST['terms'])) : [];
+
+    if ($terms) {
+        $query_args['tax_query'] = [
+            [
+                'taxonomy' => 'category',
+                'field'    => 'term_id',
+                'terms'    => $terms,
+                'compare'  => '=',
+            ],
+        ];
+    }
+
+    return $query_args;
+}
+
+add_filter('postloader_query_args/loader=my_postloader', 'my_postloader_query_args', 10, 2);
+
+function my_register_postloaders()
+{
+    \My\Postloaders\App::registerPostloader('my_postloader');
+}
+
+add_action('init', 'my_register_postloaders');
