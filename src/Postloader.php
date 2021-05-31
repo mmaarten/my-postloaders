@@ -93,7 +93,7 @@ class Postloader
     public function more()
     {
         $more = sprintf(
-            '<button type="button" class="postloader-more-button">%1$s</button',
+            '<button type="button" class="postloader-more-button">%1$s</button>',
             esc_html__('Load more', 'my-postloaders')
         );
 
