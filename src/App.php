@@ -1,24 +1,62 @@
 <?php
-
+/**
+ * Application
+ *
+ * @package My/Postloaders
+ */
 namespace My\Postloaders;
 
 final class App
 {
-    public static function init()
-    {
-        add_action('init', [__CLASS__, 'loadTextdomain']);
-        add_action('wp_enqueue_scripts', [__CLASS__, 'registerScripts']);
-        add_action('wp_enqueue_scripts', [__CLASS__, 'enqueueScripts'], PHP_INT_MAX);
+    /**
+     * Instance
+     *
+     * @var mixed
+     */
+    private static $instance = null;
 
-        add_shortcode(MY_POSTLOADERS_SHORTCODE_TAG, [__CLASS__, 'shortcode']);
+    /**
+     * Get instance
+     *
+     * @return App
+     */
+    public static function getInstance()
+    {
+        if (! self::$instance) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
     }
 
-    public static function loadTextdomain()
+    /**
+     * Construct
+     */
+    private function __construct()
     {
-        load_plugin_textdomain('postloader', false, dirname(plugin_basename(MY_POSTLOADERS_PLUGIN_FILE)) . '/languages');
     }
 
-    public static function registerScripts()
+    /**
+     * Init
+     */
+    public function init()
+    {
+        add_action('init', [$this, 'loadTextdomain']);
+        add_action('wp_enqueue_scripts', [$this, 'registerScripts'], 5);
+    }
+
+    /**
+     * Load textdomain
+     */
+    public function loadTextdomain()
+    {
+        load_plugin_textdomain('my-postloaders', false, dirname(plugin_basename(MY_POSTLOADERS_PLUGIN_FILE)) . '/languages');
+    }
+
+    /**
+     * Register scripts and styles
+     */
+    public function registerScripts()
     {
         wp_register_script('my-postloaders-script', plugins_url('postloader.js', MY_POSTLOADERS_PLUGIN_FILE), ['jquery']);
         wp_localize_script('my-postloaders-script', 'PostloaderOptions', [
@@ -28,26 +66,12 @@ final class App
         wp_register_style('my-postloaders-style', plugins_url('postloader.css', MY_POSTLOADERS_PLUGIN_FILE));
     }
 
-    public static function enqueueScripts()
+    /**
+     * Enqueue scripts and styles
+     */
+    public function enqueueScripts()
     {
-        $post = get_post();
-
-        if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, MY_POSTLOADERS_SHORTCODE_TAG)) {
-            wp_enqueue_script('my-postloaders-script');
-            wp_enqueue_style('my-postloaders-style');
-        }
-    }
-
-    public static function shortcode($atts)
-    {
-        $atts = shortcode_atts([
-            'id' => '',
-        ], $atts, MY_POSTLOADERS_SHORTCODE_TAG);
-
-        ob_start();
-
-        Postloaders::getInstance()->render($atts['id']);
-
-        return ob_get_clean();
+        wp_enqueue_script('my-postloaders-script');
+        wp_enqueue_style('my-postloaders-style');
     }
 }

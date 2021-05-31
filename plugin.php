@@ -36,16 +36,8 @@ if (! is_readable($autoloader)) {
 
 require $autoloader;
 
-/**
- * Define constants.
- */
-define('MY_POSTLOADERS_NONCE_NAME', 'postloader_nonce');
 define('MY_POSTLOADERS_PLUGIN_FILE', __FILE__);
-define('MY_POSTLOADERS_SHORTCODE_TAG', 'postloader');
 
-/**
- * Initialize application.
- */
-add_action('plugins_loaded', ['My\Postloaders\App', 'init']);
+add_action('plugins_loaded', [My\Postloaders\App::getInstance(), 'init']);
 
-require_once plugin_dir_path(MY_POSTLOADERS_PLUGIN_FILE) . 'includes/api.php';
+require_once __DIR__ . '/sample.php';
