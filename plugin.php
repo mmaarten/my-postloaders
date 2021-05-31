@@ -39,5 +39,3 @@ require $autoloader;
 define('MY_POSTLOADERS_PLUGIN_FILE', __FILE__);
 
 add_action('plugins_loaded', [My\Postloaders\App::getInstance(), 'init']);
-
-require_once __DIR__ . '/sample.php';
