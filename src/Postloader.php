@@ -43,14 +43,14 @@ class Postloader
     /**
      * Render
      */
-    public function render()
+    public function render($args = [])
     {
         ?>
 
         <div class="postloader" id="<?php echo esc_attr($this->id); ?>-postloader">
 
             <form class="postloader-form" method="post">
-                <?php $this->form(); ?>
+                <?php $this->form($args); ?>
             </form>
 
             <div class="postloader-content"></div>
@@ -67,14 +67,14 @@ class Postloader
     /**
      * Render form content
      */
-    public function form()
+    public function form($args)
     {
         wp_nonce_field("postloader_{$this->id}_form", self::NONCE_NAME);
 
         echo '<input type="hidden" name="action" value="postloader_' . esc_attr($this->id) . '_process">';
         echo '<input type="hidden" name="page" value="">';
 
-        do_action("postloader_form/loader={$this->id}", $this);
+        do_action("postloader_form/loader={$this->id}", $args, $this);
     }
 
     /**
