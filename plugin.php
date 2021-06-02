@@ -14,8 +14,6 @@
  * Domain Path:       /languages
  */
 
-namespace My;
-
 $autoloader = __DIR__ . '/vendor/autoload.php';
 if (!is_readable($autoloader)) {
     error_log(

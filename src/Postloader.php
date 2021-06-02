@@ -1,8 +1,8 @@
 <?php
 
-namespace My\Postloaders\Postloaders;
+namespace My\Postloaders;
 
-abstract class Base
+abstract class Postloader
 {
     const NONCE_NAME = 'postloader_nonce';
 
@@ -89,7 +89,7 @@ abstract class Base
     {
         printf(
             '<button type="button" class="postloader-more-button">%s</button>',
-            esc_html__('Load more', 'postloader')
+            esc_html__('Load more', 'my-postloaders')
         );
     }
 
