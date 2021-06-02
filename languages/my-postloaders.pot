@@ -1,5 +1,6 @@
 # Copyright (C) 2021 Maarten Menten
 # This file is distributed under the GPL v2 or later.
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: My Postloaders 1.0.0\n"
@@ -9,12 +10,14 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2021-05-31T19:50:50+00:00\n"
+"POT-Creation-Date: 2021-06-02 15:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.5.0\n"
+"X-Generator: Poedit 1.8.7\n"
 "X-Domain: my-postloaders\n"
 
 #. Plugin Name of the plugin
+#. translators: 1: plugin name. 2: Composer command. 3: theme directory
+#: plugin.php:23
 msgid "My Postloaders"
 msgstr ""
 
@@ -34,25 +37,11 @@ msgstr ""
 msgid "https://profiles.wordpress.org/maartenm/"
 msgstr ""
 
-#. translators: 1: Composer command. 2: plugin directory
-#: plugin.php:26
-msgid "Your installation of the My Postloaders plugin is incomplete. Please run %1$s within the %2$s directory."
+#. translators: 1: plugin name. 2: Composer command. 3: theme directory
+#: plugin.php:22
+msgid "%1$s installation is incomplete. Run %2$s within the %3$s directory."
 msgstr ""
 
-#: src/Postloader.php:61
+#: src/Postloader.php:92
 msgid "Load more"
-msgstr ""
-
-#. Translators: %s: Post type name.
-#: src/Postloader.php:122
-msgid "No %s found."
-msgstr ""
-
-#. Translators: %1$s: Post type name. %2$s: Post type name.
-#: src/Postloader.php:126
-msgid "No %1$s or %2$s found."
-msgstr ""
-
-#: src/Postloader.php:132
-msgid "No items found."
 msgstr ""
