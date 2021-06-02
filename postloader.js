@@ -1,13 +1,14 @@
-(function(){
+(function(window){
+  "use strict";
+  window = window || {};
 
   function Postloader(elem, options) {
-
     this.$elem = jQuery(elem);
     this.options = jQuery.extend({}, PostloaderOptions, options);
 
     this.$elem.on('submit', '.postloader-form', this.onFormSubmit.bind(this));
     this.$elem.on('reset', '.postloader-form', this.onFormReset.bind(this));
-    this.$elem.on('change', '.postloader-form :input.autoload', this.onInputChange.bind(this));
+    this.$elem.on('change', '.postloader-form .autoload', this.onAutoloadInputChange.bind(this));
     this.$elem.on('click', '.postloader-more-button', this.onMoreButtonClick.bind(this));
 
     jQuery(document).trigger('postloader.init', [this]);
@@ -15,35 +16,35 @@
     this.load(1);
   }
 
-  Postloader.prototype.onFormSubmit = function(event) {
-    event.preventDefault();
+  Postloader.prototype.onFormSubmit = function() {
     this.load(1);
   };
 
-  Postloader.prototype.onFormReset = function(event) {
+  Postloader.prototype.onFormReset = function() {
+    setTimeout(function(){
+      this.load(1);
+    }.bind(this), 300);
+  };
+
+  Postloader.prototype.onAutoloadInputChange = function() {
     this.load(1);
   };
 
-  Postloader.prototype.onInputChange = function(event) {
-    this.load(1);
-  };
-
-  Postloader.prototype.onMoreButtonClick = function(event) {
-    event.preventDefault();
+  Postloader.prototype.onMoreButtonClick = function() {
     var page = parseInt(this.$elem.find('.postloader-form input[name="page"]').val());
     this.load(page + 1);
   };
 
   Postloader.prototype.load = function(page) {
 
-    this.$elem.addClass('is-loading');
     this.$elem.find('.postloader-form input[name="page"]').val(page);
+    this.$elem.addClass('is-loading');
 
     jQuery.post(this.options.ajaxurl, this.$elem.find('.postloader-form').serialize(), function(response){
-
       this.$elem.removeClass('is-loading');
+      this.$elem.find('.postloader-form input[name="page"]').val(response.page);
 
-      if (response.page < response.max_num_pages) {
+      if (response.page < response.totalPages) {
         this.$elem.addClass('has-more');
       } else {
         this.$elem.removeClass('has-more');
@@ -55,58 +56,24 @@
 
       this.$elem.find('.postloader-content').append(response.content);
 
-      jQuery(document).trigger('postloader.response', [response, this]);
-
+      jQuery(document).trigger('postloader.loadComplete', [this]);
     }.bind(this));
-
   };
 
   window.Postloader = Postloader;
 
-})();
-
-(function(){
+})(window);
+(function(undefined){
   jQuery.fn.postloader = function(options) {
     return this.each(function(){
-      if (! jQuery(this).data('postloader')) {
+      if (undefined === jQuery(this).data('postloader')) {
         jQuery(this).data('postloader', new Postloader(this, options));
       }
     });
   }
 })();
-
 (function(){
   document.addEventListener('DOMContentLoaded', function(){
     jQuery('.postloader').postloader();
-  });
-})();
-
-(function(){
-  document.addEventListener('DOMContentLoaded', function(){
-    // Checkbox change. Update label 'active' class.
-    jQuery('.postloader').on('change', '.postloader-form label input[type="checkbox"]', function(){
-      var $label = jQuery(this).closest('label');
-      if (jQuery(this).is(':checked')) {
-        $label.addClass('active');
-      } else {
-        $label.removeClass('active');
-      }
-    });
-
-    // Radio change. Update label 'active' class.
-    var $active = jQuery('.postloader-form label input[type="radio"]:checked');
-    jQuery('.postloader').on('click', '.postloader-form label input[type="radio"]', function(){
-      if ($active) {
-        $active.prop('checked', false).closest('label').removeClass('active');
-        $active = null;
-      }
-      var $label = jQuery(this).closest('label');
-      if (jQuery(this).is(':checked')) {
-        $label.addClass('active');
-        $active = jQuery(this);
-      } else {
-        $label.removeClass('active');
-      }
-    });
   });
 })();
