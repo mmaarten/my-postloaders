@@ -13,6 +13,8 @@ class App
         add_action('init', [__CLASS__, 'loadTextdomain']);
         add_action('wp_enqueue_scripts', [__CLASS__, 'registerAssets'], 5);
         add_action('wp_enqueue_scripts', [__CLASS__, 'autoEnqueueAssets'], 10);
+
+        add_shortcode(self::SHORTCODE, [__CLASS__, 'shortcode']);
     }
 
     public static function loadTextdomain()
@@ -53,8 +55,8 @@ class App
 
     public static function registerPostloader($postloader)
     {
-        if (! is_a($postloader, 'Postloader')) {
-            $postloader = new Postloader();
+        if (! is_a($postloader, __NAMESPACE__. '\Postloader')) {
+            $postloader = new $postloader();
         }
 
         self::$postloaders[$postloader->getID()] = $postloader;
