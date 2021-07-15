@@ -6,6 +6,8 @@ class App
 {
     const SHORTCODE = 'postloader';
 
+    protected static $postloaders = [];
+
     public static function init()
     {
         add_action('init', [__CLASS__, 'loadTextdomain']);
@@ -49,13 +51,35 @@ class App
         }
     }
 
+    public static function registerPostloader($postloader)
+    {
+        if (! is_a($postloader, 'Postloader')) {
+            $postloader = new Postloader();
+        }
+
+        self::$postloaders[$postloader->getID()] = $postloader;
+    }
+
+    public static function getPostloader($id)
+    {
+        if (isset(self::$postloaders[$id])) {
+            return self::$postloaders[$id];
+        }
+
+        return null;
+    }
+
     public static function shortcode($atts)
     {
         $atts = shortcode_atts([
             'id' => '',
         ], $atts, self::SHORTCODE);
 
-        $postloader = new Postloader($atts['id']);
+        $postloader = self::getPostloader($atts['id']);
+
+        if (! $postloader) {
+            return '';
+        }
 
         ob_start();
         $postloader->render();
